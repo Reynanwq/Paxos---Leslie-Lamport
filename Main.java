@@ -37,9 +37,10 @@ public class Main {
         }
 
         // Proposer processa respostas de Promise
-        for (int i = 0; i < acceptors.size(); i++) {
+        /*for (int i = 0; i < 2; i++) { // Alterado para processar apenas acceptor1 e acceptor2
             proposer.receive(new Promise<>("acceptor" + (i + 1), prepare.getProposalId(), "proposer1", Optional.empty(), Optional.empty()));
-        }
+        }*/
+
 
         // Proposer envia Accept
         Optional<Message> acceptMsg = proposer.getCurrentAccept();
@@ -49,14 +50,11 @@ public class Main {
 
             // Acceptors recebem e respondem com Accepted ou Nack
 for (Acceptor<String> acceptor : acceptors) {
-    if (acceptor.getNetworkUid().equals("acceptor1") || acceptor.getNetworkUid().equals("acceptor2")) {
-        acceptor.receive(acceptMessage); // Aceita a proposta
-    } else {
         // Simula a rejeição da proposta
         System.out.println("Acceptor " + acceptor.getNetworkUid() + " rejeitou a proposta.");
         // Pode-se enviar um Nack para o Proposer se necessário
         // proposer.receive(new Nack<>(acceptor.getNetworkUid(), acceptMessage.getProposalId(), "proposer1"));
-    }
+    
 }
 
 
