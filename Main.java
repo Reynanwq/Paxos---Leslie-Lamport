@@ -42,6 +42,9 @@ public class Main {
         acceptorsToPromise.add("acceptor5");
         acceptorsToPromise.add("acceptor6");
         acceptorsToPromise.add("acceptor7");
+        acceptorsToPromise.add("acceptor8");
+        acceptorsToPromise.add("acceptor9");
+        acceptorsToPromise.add("acceptor10");
         proposer.setAcceptorsToPromise(acceptorsToPromise);
 
         // Proposer processa respostas de Promise apenas para Acceptors selecionados
