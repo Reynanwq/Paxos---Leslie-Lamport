@@ -8,6 +8,7 @@ public class Main {
     public static void main(String[] args) {
         // Criar instância do proposer
         Proposer<String> proposer = new Proposer<>("proposer1", 6); // Quórum: 6
+        Proposer<String> proposer2 = new Proposer<>("proposer2", 6); // Quórum: 6
 
         // Criar instâncias dos acceptors
         List<Acceptor<String>> acceptors = new ArrayList<>();
@@ -52,6 +53,7 @@ public class Main {
 
         // Proposer envia Accept
         Optional<Message> acceptMsg = proposer.getCurrentAccept();
+        //se é a promise é (n/2)+1
         if (acceptMsg.isPresent() && acceptMsg.get() instanceof Accept) {
             Accept<String> acceptMessage = (Accept<String>) acceptMsg.get();
             System.out.println("Proposta aceita: " + acceptMessage.getProposalValue());
@@ -59,10 +61,11 @@ public class Main {
             // Acceptors recebem e respondem com Accepted ou Nack
             for (Acceptor<String> acceptor : acceptors) {
                 if (acceptorsToPromise.contains(acceptor.getNetworkUid())) {
-                    acceptor.receive(acceptMessage); // Aceita a proposta
+                    //verifica se fez uma promessa
+                    acceptor.receive(acceptMessage);
                     System.out.println("Acceptor " + acceptor.getNetworkUid() + " aceitou a proposta.");
                 } else {
-                    // Simula a rejeição da proposta
+                    // verifica se não fez uma promessa
                     System.out.println("Acceptor " + acceptor.getNetworkUid() + " rejeitou a proposta.");
                     // Pode-se enviar um Nack para o Proposer se necessário
                     // proposer.receive(new Nack<>(acceptor.getNetworkUid(), acceptMessage.getProposalId(), "proposer1"));
@@ -85,5 +88,21 @@ public class Main {
         } else {
             System.out.println("Nenhuma proposta aceita.");
         }
+
+        // Simular a proposição de um valor pelo proposer2
+        proposer2.proposeValue("valorB");
+
+        // Preparar uma proposta
+        Prepare prepare2 = proposer2.prepare();
+        System.out.println("Proposta enviada por proposer2: " + prepare2.getProposalId().getProposalNumber());
+
+        // Acceptors recebem a proposta
+        for (Acceptor<String> acceptor : acceptors) {
+            Message response = acceptor.receive(prepare2);
+            if (response instanceof Nack) {
+                System.out.println("Acceptor " + acceptor.getNetworkUid() + " rejeitou a proposta de proposer2.");
+            }
+        }
+
     }
 }
