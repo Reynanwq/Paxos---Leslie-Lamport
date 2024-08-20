@@ -1,11 +1,15 @@
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
+import java.util.Objects;
 public class Proposer<T> {
     private final String networkUid;
     private final int quorumSize;
-
     private Optional<T> proposedValue = Optional.empty();
     private ProposalID proposalId;
     private ProposalID highestProposalId;
@@ -14,6 +18,7 @@ public class Proposer<T> {
     private Set<String> nacksReceived = new HashSet<>();
     private Optional<Prepare> currentPrepare = Optional.empty();
     private Optional<Message> currentAccept = Optional.empty(); // Alterado para Message
+    private Set<String> acceptorsToPromise = new HashSet<>(); // Adicionado para selecionar Acceptors
 
     private boolean leader = false;
 
@@ -22,6 +27,11 @@ public class Proposer<T> {
         this.quorumSize = quorumSize;
         this.proposalId = new ProposalID(0, networkUid);
         this.highestProposalId = new ProposalID(0, networkUid);
+    }
+
+    // Adicionado para definir os Acceptors que devem fazer uma promessa
+    public void setAcceptorsToPromise(Set<String> acceptors) {
+        this.acceptorsToPromise = acceptors;
     }
 
     public boolean isLeader() {
@@ -94,36 +104,42 @@ public class Proposer<T> {
     }
 
     private Optional<Message> receivePromise(Promise<T> msg) {
-    observeProposal(msg.getProposalId());
+        observeProposal(msg.getProposalId());
 
-    if (!leader && msg.getProposalId().equals(proposalId) && !promisesReceived.contains(msg.getNetworkUid())) {
-        promisesReceived.add(msg.getNetworkUid());
+        if (!leader && msg.getProposalId().equals(proposalId) && !promisesReceived.contains(msg.getNetworkUid())) {
+            promisesReceived.add(msg.getNetworkUid());
 
-        if (msg.getLastAcceptedProposalId().isPresent()) {
-            ProposalID pid = msg.getLastAcceptedProposalId().get();
-            if (!highestAcceptedId.isPresent() || pid.compareTo(highestAcceptedId.get()) > 0) {
-                highestAcceptedId = Optional.of(pid);
-                proposedValue = msg.getLastAcceptedValue();
+            if (msg.getLastAcceptedProposalId().isPresent()) {
+                ProposalID pid = msg.getLastAcceptedProposalId().get();
+                if (!highestAcceptedId.isPresent() || pid.compareTo(highestAcceptedId.get()) > 0) {
+                    highestAcceptedId = Optional.of(pid);
+                    proposedValue = msg.getLastAcceptedValue();
+                }
+            }
+
+            // Verifica se o quorum foi alcançado
+            if (isQuorumReached()) {
+                leader = true;
+                if (proposedValue.isPresent()) {
+                    currentAccept = Optional.of(new Accept<>(networkUid, proposalId, proposedValue.get()));
+                    return currentAccept;
+                }
             }
         }
+        return Optional.empty();
+    }
 
-        // Verifica se o quorum foi alcançado
-        if (isQuorumReached()) {
-            leader = true;
-            if (proposedValue.isPresent()) {
-                currentAccept = Optional.of(new Accept<>(networkUid, proposalId, proposedValue.get()));
-                return currentAccept;
+    public boolean isQuorumReached() {
+        // Verifica se o número de promessas recebidas é maior que a quantidade de acceptors / 2 + 1
+        return promisesReceived.size() >= (quorumSize / 2 + 1); // Corrigido para >=
+    }
+
+    // Método para processar apenas Acceptors selecionados
+    public void processPromisesForSelectedAcceptors(List<Acceptor<T>> acceptors) {
+        for (Acceptor<T> acceptor : acceptors) {
+            if (acceptorsToPromise.contains(acceptor.getNetworkUid())) {
+                receive(new Promise<>(acceptor.getNetworkUid(), proposalId, networkUid, Optional.empty(), Optional.empty()));
             }
         }
     }
-    return Optional.empty();
 }
-
-
-    public boolean isQuorumReached() {
-    // Verifica se o número de promessas recebidas é maior que a quantidade de acceptors / 2 + 1
-    return promisesReceived.size() > (quorumSize / 2);
-}
-
-}
-

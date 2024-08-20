@@ -1,11 +1,8 @@
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.Objects;
 
 public class Main {
     public static void main(String[] args) {
@@ -36,11 +33,19 @@ public class Main {
             acceptor.receive(prepare);
         }
 
-        // Proposer processa respostas de Promise
-        for (int i = 0; i < acceptors.size(); i++) { // Alterado para processar apenas acceptor1 e acceptor2
-            proposer.receive(new Promise<>("acceptor" + (i + 1), prepare.getProposalId(), "proposer1", Optional.empty(), Optional.empty()));
-        }
+        // Definir quais Acceptors devem fazer uma promessa
+        Set<String> acceptorsToPromise = new HashSet<>();
+        acceptorsToPromise.add("acceptor1");
+        acceptorsToPromise.add("acceptor2");
+        acceptorsToPromise.add("acceptor3");
+        acceptorsToPromise.add("acceptor4");
+        acceptorsToPromise.add("acceptor5");
+        acceptorsToPromise.add("acceptor6");
+        acceptorsToPromise.add("acceptor7");
+        proposer.setAcceptorsToPromise(acceptorsToPromise);
 
+        // Proposer processa respostas de Promise apenas para Acceptors selecionados
+        proposer.processPromisesForSelectedAcceptors(acceptors);
 
         // Proposer envia Accept
         Optional<Message> acceptMsg = proposer.getCurrentAccept();
@@ -49,23 +54,22 @@ public class Main {
             System.out.println("Proposta aceita: " + acceptMessage.getProposalValue());
 
             // Acceptors recebem e respondem com Accepted ou Nack
-for (Acceptor<String> acceptor : acceptors) {
-    if (true) {
-        acceptor.receive(acceptMessage); // Aceita a proposta
-        System.out.println("Acceptor " + acceptor.getNetworkUid() + " Aceitou a proposta.");
-    } else {
-        // Simula a rejeição da proposta
-        System.out.println("Acceptor " + acceptor.getNetworkUid() + " rejeitou a proposta.");
-        // Pode-se enviar um Nack para o Proposer se necessário
-        // proposer.receive(new Nack<>(acceptor.getNetworkUid(), acceptMessage.getProposalId(), "proposer1"));
-    }
-}
-
+            for (Acceptor<String> acceptor : acceptors) {
+                if (acceptorsToPromise.contains(acceptor.getNetworkUid())) {
+                    acceptor.receive(acceptMessage); // Aceita a proposta
+                    System.out.println("Acceptor " + acceptor.getNetworkUid() + " aceitou a proposta.");
+                } else {
+                    // Simula a rejeição da proposta
+                    System.out.println("Acceptor " + acceptor.getNetworkUid() + " rejeitou a proposta.");
+                    // Pode-se enviar um Nack para o Proposer se necessário
+                    // proposer.receive(new Nack<>(acceptor.getNetworkUid(), acceptMessage.getProposalId(), "proposer1"));
+                }
+            }
 
             // Learners processam as respostas Accepted
             for (Learner<String> learner : learners) {
-                for (int i = 0; i < acceptors.size(); i++) {
-                    learner.receive(new Accepted<>("acceptor" + (i + 1), acceptMessage.getProposalId(), acceptMessage.getProposalValue()));
+                for (Acceptor<String> acceptor : acceptors) {
+                    learner.receive(new Accepted<>(acceptor.getNetworkUid(), acceptMessage.getProposalId(), acceptMessage.getProposalValue()));
                 }
             }
 
