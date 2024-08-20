@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Objects;
+
+
 public class Proposer<T> {
     private final String networkUid;
     private final int quorumSize;
@@ -141,5 +143,29 @@ public class Proposer<T> {
                 receive(new Promise<>(acceptor.getNetworkUid(), proposalId, networkUid, Optional.empty(), Optional.empty()));
             }
         }
+    }
+
+    public String getNetworkUid() {
+        return networkUid;
+    }
+
+
+    // Adicionado para remover o Proposer e limpar o estado
+    public void removeProposer() {
+        // Informar no terminal que o Proposer está sendo removido
+        System.out.println("Removendo o Proposer com UID: " + networkUid);
+        
+        // Limpar o estado do Proposer
+        proposedValue = Optional.empty();
+        proposalId = new ProposalID(0, networkUid); // Resetar proposalId
+        highestProposalId = new ProposalID(0, networkUid); // Resetar highestProposalId
+        highestAcceptedId = Optional.empty();
+        promisesReceived.clear();
+        nacksReceived.clear();
+        currentPrepare = Optional.empty();
+        currentAccept = Optional.empty();
+
+        // Notificar outros componentes se necessário
+        System.out.println("Estado do Proposer com UID " + networkUid + " foi limpo.");
     }
 }

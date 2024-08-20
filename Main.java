@@ -10,6 +10,8 @@ public class Main {
         Proposer<String> proposer = new Proposer<>("proposer1", 6); // Quórum: 6
         Proposer<String> proposer2 = new Proposer<>("proposer2", 6); // Quórum: 6
 
+        
+
         // Criar instâncias dos acceptors
         List<Acceptor<String>> acceptors = new ArrayList<>();
         for (int i = 1; i <= 10; i++) {
@@ -103,6 +105,16 @@ public class Main {
                 System.out.println("Acceptor " + acceptor.getNetworkUid() + " rejeitou a proposta de proposer2.");
             }
         }
+
+        // Adicionar os proposers ao gerenciador
+        ProposerManager.addProposer(proposer);
+        ProposerManager.addProposer(proposer2);
+
+        // Remover um Proposer
+        ProposerManager.removeProposer("proposer1");
+
+        // Tentar remover um Proposer que não existe
+        ProposerManager.removeProposer("proposer3");
 
     }
 }
