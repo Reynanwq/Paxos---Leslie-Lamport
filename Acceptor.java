@@ -54,4 +54,28 @@ public class Acceptor<T> {
             return new Nack(networkUid, msg.getProposalId(), msg.getNetworkUid(), promisedId);
         }
     }
+
+    public boolean sendPing(String proposerUid) {
+        Proposer<?> proposer = ProposerManager.getProposer(proposerUid); // Obtém o Proposer com o UID
+        if (proposer == null) {
+            System.out.println("Proposer com UID " + proposerUid + " não encontrado.");
+            return false;
+        }
+        if (proposer.isActive()) {
+            System.out.println("Proposer " + proposerUid + " está ativo e respondeu ao ping.");
+            return true;
+        } else {
+            System.out.println("Proposer " + proposerUid + " não está ativo.");
+            return false;
+        }
+    }
+    
+    
+    // Método auxiliar para simular o recebimento do ping pelo Proposer
+    private boolean receivePingFromProposer(String proposerUid) {
+        // Simula a chamada ao método do Proposer, aqui simplificado
+        // Em uma implementação real, isso poderia envolver comunicação via rede
+        return true; // Simula o Proposer respondendo
+    }
+    
 }

@@ -15,11 +15,16 @@ public class ProposerManager {
         proposers.put(proposer.getNetworkUid(), proposer);
     }
 
+    public static Proposer<?> getProposer(String proposerUid) {
+        return proposers.get(proposerUid);
+    }
+
     public static void removeProposer(String proposerUid) {
         Proposer<?> proposer = proposers.remove(proposerUid);
         if (proposer != null) {
-            //System.out.println("Removendo o Proposer com UID: " + proposerUid);
-            proposer.removeProposer(); // Limpar o estado do Proposer
+            // Limpar o estado do Proposer
+            proposer.removeProposer(); 
+            // Certifique-se de que todos os registros do Proposer sejam removidos
             System.out.println("Proposer com UID " + proposerUid + " foi removido e seu estado limpo.");
         } else {
             System.out.println("Proposer com UID " + proposerUid + " não encontrado.");

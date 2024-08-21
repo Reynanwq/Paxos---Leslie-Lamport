@@ -5,12 +5,10 @@ import java.util.Optional;
 import java.util.Set;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         // Criar instância do proposer
         Proposer<String> proposer = new Proposer<>("proposer1", 6); // Quórum: 6
         Proposer<String> proposer2 = new Proposer<>("proposer2", 6); // Quórum: 6
-
-        
 
         // Criar instâncias dos acceptors
         List<Acceptor<String>> acceptors = new ArrayList<>();
@@ -26,15 +24,18 @@ public class Main {
 
         // Simular a proposição de um valor
         proposer.proposeValue("valorA");
+        //Thread.sleep(2000); // Intervalo de 2 segundos
 
         // Preparar uma proposta
         Prepare prepare = proposer.prepare();
         System.out.println("Proposta enviada: " + prepare.getProposalId().getProposalNumber());
+        //Thread.sleep(2000); // Intervalo de 2 segundos
 
         // Acceptors recebem a proposta
         for (Acceptor<String> acceptor : acceptors) {
             acceptor.receive(prepare);
         }
+        //Thread.sleep(2000); // Intervalo de 2 segundos
 
         // Definir quais Acceptors devem fazer uma promessa
         Set<String> acceptorsToPromise = new HashSet<>();
@@ -49,29 +50,28 @@ public class Main {
         acceptorsToPromise.add("acceptor9");
         acceptorsToPromise.add("acceptor10");
         proposer.setAcceptorsToPromise(acceptorsToPromise);
+        //Thread.sleep(2000); // Intervalo de 2 segundos
 
         // Proposer processa respostas de Promise apenas para Acceptors selecionados
         proposer.processPromisesForSelectedAcceptors(acceptors);
+        //Thread.sleep(2000); // Intervalo de 2 segundos
 
         // Proposer envia Accept
         Optional<Message> acceptMsg = proposer.getCurrentAccept();
-        //se é a promise é (n/2)+1
         if (acceptMsg.isPresent() && acceptMsg.get() instanceof Accept) {
             Accept<String> acceptMessage = (Accept<String>) acceptMsg.get();
             System.out.println("Proposta aceita: " + acceptMessage.getProposalValue());
+            //Thread.sleep(2000); // Intervalo de 2 segundos
 
             // Acceptors recebem e respondem com Accepted ou Nack
             for (Acceptor<String> acceptor : acceptors) {
                 if (acceptorsToPromise.contains(acceptor.getNetworkUid())) {
-                    //verifica se fez uma promessa
                     acceptor.receive(acceptMessage);
                     System.out.println("Acceptor " + acceptor.getNetworkUid() + " aceitou a proposta.");
                 } else {
-                    // verifica se não fez uma promessa
                     System.out.println("Acceptor " + acceptor.getNetworkUid() + " rejeitou a proposta.");
-                    // Pode-se enviar um Nack para o Proposer se necessário
-                    // proposer.receive(new Nack<>(acceptor.getNetworkUid(), acceptMessage.getProposalId(), "proposer1"));
                 }
+                //Thread.sleep(2000); // Intervalo de 2 segundos
             }
 
             // Learners processam as respostas Accepted
@@ -80,6 +80,7 @@ public class Main {
                     learner.receive(new Accepted<>(acceptor.getNetworkUid(), acceptMessage.getProposalId(), acceptMessage.getProposalValue()));
                 }
             }
+            //Thread.sleep(2000); // Intervalo de 2 segundos
 
             // Verificar a decisão final dos Learners
             for (Learner<String> learner : learners) {
@@ -87,16 +88,23 @@ public class Main {
                     System.out.println("Learner " + learner.getNetworkUid() + " decidiu valor final: " + value);
                 });
             }
+            //Thread.sleep(2000); // Intervalo de 2 segundos
         } else {
             System.out.println("Nenhuma proposta aceita.");
         }
 
+        
+        
+        
+
         // Simular a proposição de um valor pelo proposer2
         proposer2.proposeValue("valorB");
+        Thread.sleep(2000); // Intervalo de 2 segundos
 
         // Preparar uma proposta
         Prepare prepare2 = proposer2.prepare();
         System.out.println("Proposta enviada por proposer2: " + prepare2.getProposalId().getProposalNumber());
+        Thread.sleep(2000); // Intervalo de 2 segundos
 
         // Acceptors recebem a proposta
         for (Acceptor<String> acceptor : acceptors) {
@@ -104,17 +112,28 @@ public class Main {
             if (response instanceof Nack) {
                 System.out.println("Acceptor " + acceptor.getNetworkUid() + " rejeitou a proposta de proposer2.");
             }
+            Thread.sleep(2000); // Intervalo de 2 segundos
         }
 
         // Adicionar os proposers ao gerenciador
         ProposerManager.addProposer(proposer);
         ProposerManager.addProposer(proposer2);
+        Thread.sleep(2000); // Intervalo de 2 segundos
 
         // Remover um Proposer
         ProposerManager.removeProposer("proposer1");
+        Thread.sleep(2000); // Intervalo de 2 segundos
 
         // Tentar remover um Proposer que não existe
         ProposerManager.removeProposer("proposer3");
 
+        // Escolher um Acceptor para enviar o ping
+        Acceptor<String> chosenAcceptor = acceptors.get(0);
+        boolean proposerAtivo = chosenAcceptor.sendPing(proposer.getNetworkUid());
+        if (proposerAtivo) {
+            System.out.println("O Proposer está ativo e respondeu ao ping.");
+        } else {
+            System.out.println("O Proposer não respondeu ao ping. Ele pode estar inativo.");
+        }
     }
 }

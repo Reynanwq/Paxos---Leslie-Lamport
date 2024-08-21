@@ -168,4 +168,18 @@ public class Proposer<T> {
         // Notificar outros componentes se necessário
         System.out.println("Estado do Proposer com UID " + networkUid + " foi limpo.");
     }
+
+    public boolean receivePing(String acceptorUid) {
+        System.out.println("Proposer " + networkUid + " recebeu ping do Acceptor " + acceptorUid);
+        // Se o Proposer estiver ativo, ele responde como ativo
+        return true;
+    }
+
+    public boolean isActive() {
+        // Adicione a lógica para determinar se o Proposer ainda está ativo
+        // Por exemplo, você pode verificar se o `proposalId` e outros campos estão definidos corretamente
+        return !proposalId.equals(new ProposalID(0, networkUid)); // Exemplo simplificado
+    }
+    
+    
 }
