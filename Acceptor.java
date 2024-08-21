@@ -1,4 +1,5 @@
 import java.util.Optional;
+import java.util.Set;
 
 public class Acceptor<T> {
     private Optional<ProposalID> promisedId = Optional.empty();
@@ -92,5 +93,11 @@ public class Acceptor<T> {
             System.out.println("Proposer " + proposerUid + " não está ativo.");
             return false;
         }
+    }
+
+    public Proposer<T> convertToProposer(int quorumSize, Set<String> acceptorsToPromise) {
+        // Cria um novo Proposer com o mesmo networkUid do Acceptor
+        Proposer<T> proposer = new Proposer<>(this.networkUid, quorumSize);
+        return proposer;
     }
 }

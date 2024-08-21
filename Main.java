@@ -9,12 +9,12 @@ public class Main {
         // Criar instância do proposer
         Proposer<String> proposer = new Proposer<>("proposer1", 6); // Quórum: 6
         Proposer<String> proposer2 = new Proposer<>("proposer2", 6); // Quórum: 6
-        Proposer<String> proposer4 = new Proposer<>("proposer4", 6); // Quórum: 6
+        //Proposer<String> proposer4 = new Proposer<>("proposer4", 6); // Quórum: 6
 
         // Adicionar os proposers ao gerenciador
         ProposerManager.addProposer(proposer);
         ProposerManager.addProposer(proposer2);
-        ProposerManager.addProposer(proposer4);
+        //ProposerManager.addProposer(proposer4);
         Thread.sleep(2000); // Intervalo de 2 segundos
 
         // Criar instâncias dos acceptors
@@ -156,8 +156,32 @@ public class Main {
         Thread.sleep(2000); // Intervalo de 2 segundos
 
 
+        //ACCEPTOR VRA PROPOSER
+        Proposer<String> proposer4 = null;
+        String specificAcceptorUid = "acceptor5";
+        // Encontrar o Acceptor específico na lista
+        Optional<Acceptor<String>> specificAcceptorOpt = acceptors.stream()
+                .filter(a -> a.getNetworkUid().equals(specificAcceptorUid))
+                .findFirst();
+
+        if (specificAcceptorOpt.isPresent()) {
+            Acceptor<String> specificAcceptor = specificAcceptorOpt.get();
+            System.out.println("Acceptor encontrado com UID: " + specificAcceptor.getNetworkUid());
+            proposer4 = specificAcceptor.convertToProposer(5, acceptorsToPromise);
+            // Verifica se o Proposer foi criado corretamente
+            if (proposer4 != null) {
+                System.out.println("Proposer criado com UID: " + proposer4.getNetworkUid());
+                ProposerManager.addProposer(proposer4);
+            } else {
+                System.out.println("Falha ao criar o Proposer.");
+            }
+
+        }
+
+
+
         // Simular a proposição de um valor pelo proposer4
-        proposer4.proposeValue("valorC");
+        proposer4.proposeValue("valorC");   
         Thread.sleep(2000); // Intervalo de 2 segundos
 
         // Preparar uma proposta
@@ -179,7 +203,7 @@ public class Main {
                 acceptorsToPromise4.add("acceptor2");
                 acceptorsToPromise4.add("acceptor3");
                 acceptorsToPromise4.add("acceptor4");
-                acceptorsToPromise4.add("acceptor5");
+                //acceptorsToPromise4.add("acceptor5");
                 acceptorsToPromise4.add("acceptor6");
                 acceptorsToPromise4.add("acceptor7");
                 acceptorsToPromise4.add("acceptor8");
