@@ -5,7 +5,7 @@ public class Acceptor<T> {
     private Optional<ProposalID> acceptedId = Optional.empty();
     private Optional<T> acceptedValue = Optional.empty();
     private final String networkUid;
-    private Optional<String> promisedToProposer = Optional.empty(); // Adicionando campo para rastrear o Proposer
+    private Optional<String> promisedToProposer = Optional.empty(); // Campo para rastrear o Proposer
 
     public Acceptor(String networkUid) {
         this.networkUid = networkUid;
@@ -28,8 +28,20 @@ public class Acceptor<T> {
         if (promisedId.isEmpty() || msg.getProposalId().compareTo(promisedId.get()) >= 0) {
             // Verificar se o Acceptor já prometeu para outro Proposer
             if (promisedToProposer.isPresent() && !promisedToProposer.get().equals(msg.getNetworkUid())) {
-                // Se já prometeu para outro Proposer, retornar Nack
-                return new Nack(networkUid, msg.getProposalId(), msg.getNetworkUid(), promisedId);
+                // Tentar pingar o Proposer que foi prometido
+                boolean proposerAtivo = sendPing(promisedToProposer.get());
+                if (!proposerAtivo) {
+                    System.out.println("PROPOSER PROMETIDO NÃO ESTÁ ATIVO");
+                    // Se o Proposer prometido não estiver ativo, limpar o estado e aceitar novas propostas
+                    promisedId = Optional.empty();
+                    acceptedId = Optional.empty();
+                    acceptedValue = Optional.empty();
+                    promisedToProposer = Optional.empty();
+                } else {
+                    System.out.println("PROPOSER PROMETIDO ESTÁ ATIVO");
+                    // Se o Proposer prometido ainda estiver ativo, retornar Nack
+                    return new Nack(networkUid, msg.getProposalId(), msg.getNetworkUid(), promisedId);
+                }
             }
             promisedId = Optional.of(msg.getProposalId());
             promisedToProposer = Optional.of(msg.getNetworkUid());
@@ -43,8 +55,20 @@ public class Acceptor<T> {
         if (promisedId.isEmpty() || msg.getProposalId().compareTo(promisedId.get()) >= 0) {
             // Verificar se o Acceptor já prometeu para outro Proposer
             if (promisedToProposer.isPresent() && !promisedToProposer.get().equals(msg.getNetworkUid())) {
-                // Se já prometeu para outro Proposer, retornar Nack
-                return new Nack(networkUid, msg.getProposalId(), msg.getNetworkUid(), promisedId);
+                // Tentar pingar o Proposer que foi prometido
+                boolean proposerAtivo = sendPing(promisedToProposer.get());
+                if (!proposerAtivo) {
+                    System.out.println("PROPOSER PROMETIDO NÃO ESTÁ ATIVO");
+                    // Se o Proposer prometido não estiver ativo, limpar o estado e aceitar novas propostas
+                    promisedId = Optional.empty();
+                    acceptedId = Optional.empty();
+                    acceptedValue = Optional.empty();
+                    promisedToProposer = Optional.empty();
+                } else {
+                    System.out.println("PROPOSER PROMETIDO ESTÁ ATIVO");
+                    // Se o Proposer prometido ainda estiver ativo, retornar Nack
+                    return new Nack(networkUid, msg.getProposalId(), msg.getNetworkUid(), promisedId);
+                }
             }
             promisedId = Optional.of(msg.getProposalId());
             acceptedId = Optional.of(msg.getProposalId());
@@ -69,13 +93,4 @@ public class Acceptor<T> {
             return false;
         }
     }
-    
-    
-    // Método auxiliar para simular o recebimento do ping pelo Proposer
-    private boolean receivePingFromProposer(String proposerUid) {
-        // Simula a chamada ao método do Proposer, aqui simplificado
-        // Em uma implementação real, isso poderia envolver comunicação via rede
-        return true; // Simula o Proposer respondendo
-    }
-    
 }

@@ -33,7 +33,11 @@ public class Learner<T> {
         this.quorumSize = quorumSize;
     }
 
-    public Optional<Resolution<T>> receive(Accepted<T> msg) {   
+    public Optional<Resolution<T>> receive(Accepted<T> msg) {  
+
+        finalProposalId = Optional.empty();
+        finalValue = Optional.empty();
+         
         if (finalValue.isPresent()) {
             if (msg.getProposalId().compareTo(finalProposalId.get()) >= 0 && msg.getProposalValue().equals(finalValue.get())) {
                 finalAcceptors.add(msg.getNetworkUid());
