@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-public class Learner<T> {
+public class Learner<T> implements ILearner<T> {
     private final String networkUid;
     private final int quorumSize;
 
@@ -33,8 +33,8 @@ public class Learner<T> {
         this.quorumSize = quorumSize;
     }
 
-    public Optional<Resolution<T>> receive(Accepted<T> msg) {  
-
+    @Override
+    public Optional<Resolution<T>> receiveLearner(Accepted<T> msg) {
         finalProposalId = Optional.empty();
         finalValue = Optional.empty();
          
@@ -91,12 +91,13 @@ public class Learner<T> {
         return Optional.empty();
     }
 
-    public Optional<T> getFinalValue() {
+    @Override
+    public Optional<T> getFinalValueLearner() {
         return finalValue;
     }
 
-    // Adicionar método getNetworkUid
-    public String getNetworkUid() {
+    @Override
+    public String getNetworkUidLearner() {
         return networkUid;
     }
 }

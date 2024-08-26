@@ -3,266 +3,237 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 
 public class Main {
     public static void main(String[] args) throws InterruptedException {
-        // Criar instância do proposer
-        Proposer<String> proposer = new Proposer<>("proposer1", 6); // Quórum: 6
-        Proposer<String> proposer2 = new Proposer<>("proposer2", 6); // Quórum: 6
-        //Proposer<String> proposer4 = new Proposer<>("proposer4", 6); // Quórum: 6
+        Function<String, String> identityConverter = Function.identity();
 
-        // Adicionar os proposers ao gerenciador
-        ProposerManager.addProposer(proposer);
-        ProposerManager.addProposer(proposer2);
-        //ProposerManager.addProposer(proposer4);
+        // Criar nós
+        List<Np<String>> nodes = new ArrayList<>();
+        for (int i = 1; i <= 10; i++) {
+            nodes.add(new Np<>("node" + i, 6, identityConverter));
+        }
+        System.out.println("Nós criados: " + nodes);
+
+        // Adicionar os Proposers ao gerenciador
+        for (Np<String> node : nodes) {
+            ProposerManager.addProposer(node.getProposer());
+        }
+        System.out.println("Proposers adicionados ao gerenciador.");
+
         Thread.sleep(2000); // Intervalo de 2 segundos
 
-        // Criar instâncias dos acceptors
+        // Criar instâncias dos Acceptors
         List<Acceptor<String>> acceptors = new ArrayList<>();
-        for (int i = 1; i <= 10; i++) {
-            acceptors.add(new Acceptor<>("acceptor" + i));
+        for (Np<String> node : nodes) {
+            acceptors.add(node.getAcceptor());
         }
+        System.out.println("Acceptors criados: " + acceptors);
 
-        // Criar instâncias dos learners
+        // Criar instâncias dos Learners
         List<Learner<String>> learners = new ArrayList<>();
-        for (int i = 1; i <= 5; i++) {
-            learners.add(new Learner<>("learner" + i, 6)); // Quórum: 6
+        for (Np<String> node : nodes) {
+            learners.add(node.getLearner());
         }
+        System.out.println("Learners criados: " + learners);
 
-        // Simular a proposição de um valor
-        proposer.proposeValue("valorA");
-        //Thread.sleep(2000); // Intervalo de 2 segundos
 
-        // Preparar uma proposta
-        Prepare prepare = proposer.prepare();
-        System.out.println("Proposta enviada: " + prepare.getProposalId().getProposalNumber());
-        //Thread.sleep(2000); // Intervalo de 2 segundos
 
-        // Acceptors recebem a proposta
-        for (Acceptor<String> acceptor : acceptors) {
-            acceptor.receive(prepare);
-        }
-        //Thread.sleep(2000); // Intervalo de 2 segundos
+        // Propor valor para um nó específico (por exemplo, "node3")
+        String proposerId = "node3";
+        Np<String> proposerNode = nodes.stream()
+                .filter(n -> n.getProposer().getNetworkUidProposer().equals(proposerId))
+                .findFirst()
+                .orElse(null);
 
-        // Definir quais Acceptors devem fazer uma promessa
-        Set<String> acceptorsToPromise = new HashSet<>();
-        acceptorsToPromise.add("acceptor1");
-        acceptorsToPromise.add("acceptor2");
-        acceptorsToPromise.add("acceptor3");
-        acceptorsToPromise.add("acceptor4");
-        acceptorsToPromise.add("acceptor5");
-        acceptorsToPromise.add("acceptor6");
-        acceptorsToPromise.add("acceptor7");
-        acceptorsToPromise.add("acceptor8");
-        acceptorsToPromise.add("acceptor9");
-        acceptorsToPromise.add("acceptor10");
-        proposer.setAcceptorsToPromise(acceptorsToPromise);
-        //Thread.sleep(2000); // Intervalo de 2 segundos
+        if (proposerNode != null) {
+            System.out.println("Proposer encontrado com ID: " + proposerId);
 
-        // Proposer processa respostas de Promise apenas para Acceptors selecionados
-        proposer.processPromisesForSelectedAcceptors(acceptors);
-        //Thread.sleep(2000); // Intervalo de 2 segundos
+            // O nó específico propõe um valor
+            System.out.println("O nó " + proposerId + " está propondo o valor 'valorA'.");
+            proposerNode.proposeValue("valorA");
+            // Preparar uma proposta
+            Prepare prepare = proposerNode.getProposer().prepareProposer();
+            System.out.println("Proposta enviada: " + prepare.getProposalId().getProposalNumber());
 
-        // Proposer envia Accept
-        Optional<Message> acceptMsg = proposer.getCurrentAccept();
-        if (acceptMsg.isPresent() && acceptMsg.get() instanceof Accept) {
+            // Acceptors recebem a proposta
+            proposerNode.receivePrepare(prepare);
+
+            // Definir quais Acceptors devem fazer uma promessa
+            Set<String> acceptorsToPromise = new HashSet<>();
+            acceptorsToPromise.add("node1");
+            acceptorsToPromise.add("node2");
+            acceptorsToPromise.add("node3");
+            acceptorsToPromise.add("node4");
+            acceptorsToPromise.add("node5");
+           acceptorsToPromise.add("node6");
+           // acceptorsToPromise.add("node7");
+          //  acceptorsToPromise.add("node8");
+           // acceptorsToPromise.add("node9");
+           // acceptorsToPromise.add("node10");
+            proposerNode.setAcceptorsToPromise(acceptorsToPromise);
+
+            // Proposer processa respostas de Promise apenas para Acceptors selecionados
+            Set<Acceptor<String>> acceptorSet = new HashSet<>(acceptors);
+            if(proposerNode.checkAcceptorsSize(acceptorsToPromise, proposerNode.getProposer().getQuorum())){
+                System.out.println("QUANTIDADE DE PROMESSAS SUFICIENTES");
+            }else{
+                System.out.println("QUANTIDADE DE PROMESSAS INSUFICIENTES");
+            }
+            proposerNode.processPromises(acceptorSet);
+            
+
+            // Propose Enviar Accept
+            Optional<Message> acceptMsg = proposerNode.getCurrentAccept();
             Accept<String> acceptMessage = (Accept<String>) acceptMsg.get();
-            //Thread.sleep(2000); // Intervalo de 2 segundos
-
-            // Acceptors recebem e respondem com Accepted ou Nack
+            if (acceptMsg.isPresent() && acceptMsg.get() instanceof Accept) {
+                proposerNode.receiveAccept(acceptMsg);
+                // Acceptors recebem e respondem com Accepted ou Nack
             for (Acceptor<String> acceptor : acceptors) {
-                if (acceptorsToPromise.contains(acceptor.getNetworkUid())) {
-                    acceptor.receive(acceptMessage);
-                    System.out.println("Acceptor " + acceptor.getNetworkUid() + " aceitou a proposta.");
+                if (acceptorsToPromise.contains(acceptor.getNetworkUidAcceptor())) {
+                    System.out.println("Acceptor " + acceptor.getNetworkUidAcceptor() + " aceitou a proposta.");
                 } else {
-                    System.out.println("Acceptor " + acceptor.getNetworkUid() + " rejeitou a proposta.");
-                }
-                //Thread.sleep(2000); // Intervalo de 2 segundos
-            }
-
-            System.out.println("Proposta aceita: " + acceptMessage.getProposalValue());
-
-            // Learners processam as respostas Accepted
-            for (Learner<String> learner : learners) {
-                for (Acceptor<String> acceptor : acceptors) {
-                    learner.receive(new Accepted<>(acceptor.getNetworkUid(), acceptMessage.getProposalId(), acceptMessage.getProposalValue()));
+                    System.out.println("Acceptor " + acceptor.getNetworkUidAcceptor() + " rejeitou a proposta.");
                 }
             }
-            //Thread.sleep(2000); // Intervalo de 2 segundos
 
-            // Verificar a decisão final dos Learners
-            for (Learner<String> learner : learners) {
-                learner.getFinalValue().ifPresent(value -> {
-                    System.out.println("Learner " + learner.getNetworkUid() + " decidiu valor final: " + value);
+
+            for(Learner<String> nodeL : learners){
+                for(Acceptor<String> nodeA : acceptors){
+                    nodeL.receiveLearner(new Accepted<>(nodeA.getNetworkUidAcceptor(), acceptMessage.getProposalId(), acceptMessage.getProposalValue()));
+                }
+
+                for (Acceptor<String> nodeA : acceptors) {
+                    nodeL.receiveLearner(new Accepted<>(nodeA.getNetworkUidAcceptor(), acceptMessage.getProposalId(), acceptMessage.getProposalValue()));
+                }
+            }
+
+            Thread.sleep(4000);
+
+             // Verificar a decisão final dos Learners
+             for(Learner<String> nodeL : learners){
+                for (Acceptor<String> nodeA : acceptors) {
+                    nodeL.receiveLearner(new Accepted<>(nodeA.getNetworkUidAcceptor(), acceptMessage.getProposalId(), acceptMessage.getProposalValue()));
+                    //System.out.println("Learner " + learner4.getNetworkUid() + " recebeu uma mensagem Accepted de " + acceptorr.getNetworkUid());
+                }
+                
+                //System.out.println("ENTROU");
+                nodeL.getFinalValueLearner().ifPresent(value4 -> {
+                    System.out.println("Learner " + nodeL.getNetworkUidLearner() + " decidiu valor final: " +  acceptMessage.getProposalValue());
                 });
             }
-            //Thread.sleep(2000); // Intervalo de 2 segundos
-        } else {
-            System.out.println("Nenhuma proposta aceita.");
-        }
 
 
-        
-        
-        
+          }  else {
+                System.out.println("Nenhuma proposta aceita.");
+            } 
 
-        // Simular a proposição de um valor pelo proposer2
-        proposer2.proposeValue("valorB");
-        Thread.sleep(2000); // Intervalo de 2 segundos
-
-        // Preparar uma proposta
-        Prepare prepare2 = proposer2.prepare();
-        System.out.println("Proposta enviada por proposer2: " + prepare2.getProposalId().getProposalNumber());
-        Thread.sleep(2000); // Intervalo de 2 segundos
-
-        // Acceptors recebem a proposta
-        for (Acceptor<String> acceptor : acceptors) {
-            Message response = acceptor.receive(prepare2);
-            if (response instanceof Nack) {
-                System.out.println("Acceptor " + acceptor.getNetworkUid() + " rejeitou a proposta de proposer2.");
-            }
-            Thread.sleep(2000); // Intervalo de 2 segundos
-        }
-
-        
-
-        // Escolher um Acceptor para enviar o ping
-        Acceptor<String> chosenAcceptor = acceptors.get(0);
-        boolean proposerAtivo = chosenAcceptor.sendPing(proposer.getNetworkUid());
-        if (proposerAtivo) {
-            System.out.println("O Proposer está ativo e respondeu ao ping.");
-        } else {
-            System.out.println("O Proposer não respondeu ao ping. Ele pode estar inativo.");
-        }
-
-        // Remover um Proposer
-        ProposerManager.removeProposer("proposer1");
-        Thread.sleep(2000); // Intervalo de 2 segundos
-
-        // Tentar remover um Proposer que não existe
-        ProposerManager.removeProposer("proposer3");
-
-        
-        // Escolher um Acceptor para enviar o ping
-        boolean proposerAtivo2 = chosenAcceptor.sendPing(proposer.getNetworkUid());
-        if (proposerAtivo2) {
-            System.out.println("O Proposer está ativo e respondeu ao ping.");
-        } else {
-            System.out.println("O Proposer não respondeu ao ping. Ele pode estar inativo.");
-        }
-
-        // Remover um Proposer
-        ProposerManager.removeProposer("proposer2");
-        Thread.sleep(2000); // Intervalo de 2 segundos
-
-
-        //ACCEPTOR VRA PROPOSER
-        Proposer<String> proposer4 = null;
-        String specificAcceptorUid = "acceptor5";
-        // Encontrar o Acceptor específico na lista
-        Optional<Acceptor<String>> specificAcceptorOpt = acceptors.stream()
-                .filter(a -> a.getNetworkUid().equals(specificAcceptorUid))
-                .findFirst();
-
-        if (specificAcceptorOpt.isPresent()) {
-            Acceptor<String> specificAcceptor = specificAcceptorOpt.get();
-            System.out.println("Acceptor encontrado com UID: " + specificAcceptor.getNetworkUid());
-            proposer4 = specificAcceptor.convertToProposer(5, acceptorsToPromise);
-            // Verifica se o Proposer foi criado corretamente
-            if (proposer4 != null) {
-                System.out.println("Proposer criado com UID: " + proposer4.getNetworkUid());
-                ProposerManager.addProposer(proposer4);
-            } else {
-                System.out.println("Falha ao criar o Proposer.");
-            }
-
-        }
-
-
-
-        // Simular a proposição de um valor pelo proposer4
-        proposer4.proposeValue("valorC");   
-        Thread.sleep(2000); // Intervalo de 2 segundos
-
-        // Preparar uma proposta
-        Prepare prepare4 = proposer4.prepare();
-        System.out.println("Proposta enviada por proposer4: " + prepare4.getProposalId().getProposalNumber());
-        Thread.sleep(2000); // Intervalo de 2 segundos
-
-        // Acceptors recebem a proposta
-        for (Acceptor<String> acceptor : acceptors) {
-            Message response4 = acceptor.receive(prepare4);
-            if (response4 instanceof Nack) {
-                System.out.println("Acceptor " + acceptor.getNetworkUid() + " rejeitou a proposta de proposer4.");
-            }
-        }
             
-                // Definir quais Acceptors devem fazer uma promessa
-                Set<String> acceptorsToPromise4 = new HashSet<>();
-                acceptorsToPromise4.add("acceptor1");
-                acceptorsToPromise4.add("acceptor2");
-                acceptorsToPromise4.add("acceptor3");
-                acceptorsToPromise4.add("acceptor4");
-                //acceptorsToPromise4.add("acceptor5");
-                acceptorsToPromise4.add("acceptor6");
-                acceptorsToPromise4.add("acceptor7");
-                acceptorsToPromise4.add("acceptor8");
-                acceptorsToPromise4.add("acceptor9");
-                acceptorsToPromise4.add("acceptor10");
-                proposer4.setAcceptorsToPromise(acceptorsToPromise4);
-                //Thread.sleep(2000); // Intervalo de 2 segundos
 
-                // Proposer processa respostas de Promise apenas para Acceptors selecionados
-                proposer4.processPromisesForSelectedAcceptors(acceptors);
 
-                // Proposer envia Accept
-                Optional<Message> acceptMsg4 = proposer4.getCurrentAccept();
-                if (acceptMsg4.isPresent() && acceptMsg4.get() instanceof Accept) {
-                    Accept<String> acceptMessage = (Accept<String>) acceptMsg4.get();
-                    //Thread.sleep(2000); // Intervalo de 2 segundos
 
-                    // Acceptors recebem e respondem com Accepted ou Nack
-                    for (Acceptor<String> acceptorr : acceptors) {
-                        if (acceptorsToPromise.contains(acceptorr.getNetworkUid())) {
-                            acceptorr.receive(acceptMessage);
-                            System.out.println("Acceptor " + acceptorr.getNetworkUid() + " aceitou a proposta do Proposer4.");
-                        } else {
-                            System.out.println("Acceptor " + acceptorr.getNetworkUid() + " rejeitou a proposta do Proposer4.");
-                        }
-                    }
 
-                    System.out.println("Proposta aceita: " + acceptMessage.getProposalValue());
-                    Thread.sleep(4000); // Aguarde um pouco para que os Learners processem as mensagens
 
-                    // Learners processam as respostas Accepted
-                    for (Learner<String> learner4 : learners) {
-                        //System.out.println("ENTROU2");
-                        for (Acceptor<String> acceptorr : acceptors) {
-                            learner4.receive(new Accepted<>(acceptorr.getNetworkUid(), acceptMessage.getProposalId(), acceptMessage.getProposalValue()));
-                            //System.out.println("Learner " + learner4.getNetworkUid() + " recebeu uma mensagem Accepted de " + acceptorr.getNetworkUid());
-                        }
-                        
-                        for (Acceptor<String> acceptorr : acceptors) {
-                            learner4.receive(new Accepted<>(acceptorr.getNetworkUid(), acceptMessage.getProposalId(), acceptMessage.getProposalValue()));
-                        }
-                    }
-                    Thread.sleep(4000); // Aguarde um pouco para que os Learners processem as mensagens
 
-                    // Verificar a decisão final dos Learners
-                    for (Learner<String> learner4 : learners) {
-                        for (Acceptor<String> acceptorr : acceptors) {
-                            learner4.receive(new Accepted<>(acceptorr.getNetworkUid(), acceptMessage.getProposalId(), acceptMessage.getProposalValue()));
-                            //System.out.println("Learner " + learner4.getNetworkUid() + " recebeu uma mensagem Accepted de " + acceptorr.getNetworkUid());
-                        }
-                        
-                        //System.out.println("ENTROU");
-                        learner4.getFinalValue().ifPresent(value4 -> {
-                            System.out.println("Learner " + learner4.getNetworkUid() + " decidiu valor final: " + value4);
-                        });
-                    }
-                    
-                } else {
-                    System.out.println("Nenhuma proposta aceita.");
-                }      
+
+
+
+            proposerNode.checkFinalValues();
+        } else {
+            System.out.println("Proposer com ID " + proposerId + " não encontrado.");
+        }
+
+        System.out.println("-------------//-------------//--------------");
+
+
+        // Simular a proposição de um valor por um nó específico (por exemplo, "node3")
+        proposerNode = nodes.stream()
+                .filter(n -> n.getProposer().getNetworkUidProposer().equals(proposerId))
+                .findFirst()
+                .orElse(null);
+
+        if (proposerNode != null) {
+            System.out.println("O nó " + proposerId + " está propondo o valor 'valorB'.");
+            proposerNode.proposeValue("valorB");
+            Prepare prepare = proposerNode.getProposer().prepareProposer();
+            System.out.println("Proposta enviada com número: " + prepare.getProposalId().getProposalNumber());
+
+            // Acceptors recebem a proposta
+            proposerNode.receivePrepare(prepare);
+            System.out.println("Acceptors receberam a proposta com número: " + prepare.getProposalId().getProposalNumber());
+
+            // Processar promessas
+            Set<Acceptor<String>> acceptorSet = new HashSet<>(acceptors);
+            proposerNode.processPromises(acceptorSet);
+            System.out.println("Promessas processadas pelo nó " + proposerId);
+
+            // Enviar Accept
+            Optional<Message> acceptMsg = proposerNode.getCurrentAccept();
+            if (acceptMsg.isPresent()) {
+                System.out.println("Accept mensagem recebida pelo nó " + proposerId);
+                proposerNode.receiveAccept(acceptMsg);
+            } else {
+                System.out.println("Nenhuma mensagem Accept encontrada para o nó " + proposerId);
             }
+            proposerNode.checkFinalValues();
+            System.out.println("Valores finais verificados pelo nó " + proposerId);
+        }
+
+        // Remover um Proposer
+        System.out.println("Removendo o Proposer com ID: " + proposerId);
+        ProposerManager.removeProposer(proposerId);
+
+        // Atualizar Acceptors e Learners após a remoção do Proposer
+        acceptors.removeIf(a -> a.getNetworkUidAcceptor().equals(proposerId));
+        learners.removeIf(l -> l.getNetworkUidLearner().equals(proposerId));
+        System.out.println("Acceptors e Learners atualizados após remoção do Proposer.");
+
+        // Encontrar o Acceptor específico e criar um Proposer a partir dele
+        String specificAcceptorUid = "acceptor5";
+        Np<String> specificNode = nodes.stream()
+                .filter(n -> n.getAcceptor().getNetworkUidAcceptor().equals(specificAcceptorUid))
+                .findFirst()
+                .orElse(null);
+
+        if (specificNode != null) {
+            System.out.println("Acceptor encontrado com UID: " + specificAcceptorUid);
+            Np<String> newNode = new Np<>(specificAcceptorUid, 6, identityConverter);
+            ProposerManager.addProposer(newNode.getProposer());
+            System.out.println("Novo Proposer adicionado com ID: " + specificAcceptorUid);
+
+            // Adicionar novos Acceptors e Learners após a adição do novo Proposer
+            acceptors.add(newNode.getAcceptor());
+            learners.add(newNode.getLearner());
+            System.out.println("Novos Acceptors e Learners adicionados após a adição do novo Proposer.");
+
+            // Simular a proposição de um valor pelo novo Proposer
+            System.out.println("O novo nó " + specificAcceptorUid + " está propondo o valor 'valorC'.");
+            newNode.proposeValue("valorC");
+            Prepare prepare = newNode.getProposer().prepareProposer();
+            System.out.println("Proposta enviada com número: " + prepare.getProposalId().getProposalNumber());
+
+            // Acceptors recebem a proposta
+            newNode.receivePrepare(prepare);
+            System.out.println("Acceptors receberam a proposta com número: " + prepare.getProposalId().getProposalNumber());
+
+            // Processar promessas
+            Set<Acceptor<String>> acceptorSet = new HashSet<>(acceptors);
+            newNode.processPromises(acceptorSet);
+            System.out.println("Promessas processadas pelo novo nó " + specificAcceptorUid);
+
+            // Enviar Accept
+            Optional<Message> acceptMsg = newNode.getCurrentAccept();
+            if (acceptMsg.isPresent()) {
+                System.out.println("Accept mensagem recebida pelo novo nó " + specificAcceptorUid);
+                newNode.receiveAccept(acceptMsg);
+            } else {
+                System.out.println("Nenhuma mensagem Accept encontrada para o novo nó " + specificAcceptorUid);
+            }
+            newNode.checkFinalValues();
+            System.out.println("Valores finais verificados pelo novo nó " + specificAcceptorUid);
+        } else {
+            System.out.println("Acceptor com UID " + specificAcceptorUid + " não encontrado.");
+        }
+    }
 }

@@ -8,8 +8,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.Objects;
 
-
-public class Proposer<T> {
+public class Proposer<T> implements IProposer<T> {
     private final String networkUid;
     private final int quorumSize;
     private Optional<T> proposedValue = Optional.empty();
@@ -32,31 +31,38 @@ public class Proposer<T> {
     }
 
     // Adicionado para definir os Acceptors que devem fazer uma promessa
-    public void setAcceptorsToPromise(Set<String> acceptors) {
+    @Override
+    public void setAcceptorsToPromiseProposer(Set<String> acceptors) {
         this.acceptorsToPromise = acceptors;
     }
 
-    public boolean isLeader() {
+    @Override
+    public boolean isLeaderProposer() {
         return leader;
     }
 
-    public Optional<T> getProposedValue() {
+    @Override
+    public Optional<T> getProposedValueProposer() {
         return proposedValue;
     }
 
-    public ProposalID getProposalId() {
+    @Override
+    public ProposalID getProposalIdProposer() {
         return proposalId;
     }
 
-    public Optional<Prepare> getCurrentPrepare() {
+    @Override
+    public Optional<Prepare> getCurrentPrepareProposer() {
         return currentPrepare;
     }
 
-    public Optional<Message> getCurrentAccept() { // Alterado para Message
+    @Override
+    public Optional<Message> getCurrentAcceptProposer() { // Alterado para Message
         return currentAccept;
     }
 
-    public Optional<Message> proposeValue(T value) {
+    @Override
+    public Optional<Message> proposeValueProposer(T value) {
         if (!proposedValue.isPresent()) {
             proposedValue = Optional.of(value);
             if (leader) {
@@ -67,7 +73,8 @@ public class Proposer<T> {
         return Optional.empty();
     }
 
-    public Prepare prepare() {
+    @Override
+    public Prepare prepareProposer() {
         leader = false;
         promisesReceived.clear();
         nacksReceived.clear();
@@ -78,35 +85,37 @@ public class Proposer<T> {
         return currentPrepare.get();
     }
 
-    public void observeProposal(ProposalID proposalId) {
+    @Override
+    public void observeProposalProposer(ProposalID proposalId) {
         if (proposalId.compareTo(highestProposalId) > 0) {
             highestProposalId = proposalId;
         }
     }
 
-    public Optional<Message> receive(Message msg) {
+    @Override
+    public Optional<Message> receiveProposer(Message msg) {
         if (msg instanceof Nack) {
-            return receiveNack((Nack) msg);
+            return receiveNackProposer((Nack) msg);
         } else if (msg instanceof Promise) {
-            return receivePromise((Promise<T>) msg);
+            return receivePromiseProposer((Promise<T>) msg);
         }
         return Optional.empty();
     }
 
-    private Optional<Message> receiveNack(Nack msg) {
-        msg.getPromisedProposalId().ifPresent(this::observeProposal);
+    private Optional<Message> receiveNackProposer(Nack msg) {
+        msg.getPromisedProposalId().ifPresent(this::observeProposalProposer);
 
         if (msg.getProposalId().equals(proposalId)) {
             nacksReceived.add(msg.getNetworkUid());
-            if (nacksReceived.size() == quorumSize) {
-                return Optional.of(prepare());
+            if (nacksReceived.size() >= quorumSize) {
+                return Optional.of(prepareProposer());
             }
         }
         return Optional.empty();
     }
 
-    private Optional<Message> receivePromise(Promise<T> msg) {
-        observeProposal(msg.getProposalId());
+    private Optional<Message> receivePromiseProposer(Promise<T> msg) {
+        observeProposalProposer(msg.getProposalId());
 
         if (!leader && msg.getProposalId().equals(proposalId) && !promisesReceived.contains(msg.getNetworkUid())) {
             promisesReceived.add(msg.getNetworkUid());
@@ -120,7 +129,7 @@ public class Proposer<T> {
             }
 
             // Verifica se o quorum foi alcançado
-            if (isQuorumReached()) {
+            if (isQuorumReachedProposer()) {
                 leader = true;
                 if (proposedValue.isPresent()) {
                     currentAccept = Optional.of(new Accept<>(networkUid, proposalId, proposedValue.get()));
@@ -131,27 +140,43 @@ public class Proposer<T> {
         return Optional.empty();
     }
 
-    public boolean isQuorumReached() {
+    @Override
+    public boolean isQuorumReachedProposer() {
         // Verifica se o número de promessas recebidas é maior que a quantidade de acceptors / 2 + 1
         return promisesReceived.size() >= (quorumSize / 2 + 1); // Corrigido para >=
     }
 
     // Método para processar apenas Acceptors selecionados
-    public void processPromisesForSelectedAcceptors(List<Acceptor<T>> acceptors) {
+    @Override
+    public void processPromisesForSelectedAcceptorsProposer(List<Acceptor<T>> acceptors) {
         for (Acceptor<T> acceptor : acceptors) {
-            if (acceptorsToPromise.contains(acceptor.getNetworkUid())) {
-                receive(new Promise<>(acceptor.getNetworkUid(), proposalId, networkUid, Optional.empty(), Optional.empty()));
+            if (acceptorsToPromise.contains(acceptor.getNetworkUidAcceptor())) {
+                receiveProposer(new Promise<>(acceptor.getNetworkUidAcceptor(), proposalId, networkUid, Optional.empty(), Optional.empty()));
+            }
+        }
+    }
+    // Método para processar apenas Acceptors selecionados
+    @Override
+    public void processPromisesForSelectedAcceptorsProposerN(List<Node<T>> nodes) {
+        for (Node<T> node : nodes) {
+            if (acceptorsToPromise.contains(node.getNetworkUidAcceptor())) {
+                receiveProposer(new Promise<>(node.getNetworkUidAcceptor(), proposalId, networkUid, Optional.empty(), Optional.empty()));
             }
         }
     }
 
-    public String getNetworkUid() {
+    @Override
+    public String getNetworkUidProposer() {
         return networkUid;
     }
 
-
+    public boolean isAcceptorsSizeValid(Set<String> acceptorsToPromise, int quorum) {
+        return (acceptorsToPromise.size() >= quorum);
+    }
+    
     // Adicionado para remover o Proposer e limpar o estado
-    public void removeProposer() {
+    @Override
+    public void removeProposerProposer() {
         // Informar no terminal que o Proposer está sendo removido
         System.out.println("Removendo o Proposer com UID: " + networkUid);
         
@@ -169,17 +194,23 @@ public class Proposer<T> {
         System.out.println("Estado do Proposer com UID " + networkUid + " foi limpo.");
     }
 
-    public boolean receivePing(String acceptorUid) {
+    @Override
+    public boolean receivePingProposer(String acceptorUid) {
         System.out.println("Proposer " + networkUid + " recebeu ping do Acceptor " + acceptorUid);
         // Se o Proposer estiver ativo, ele responde como ativo
         return true;
     }
 
-    public boolean isActive() {
+    @Override
+    public boolean isActiveProposer() {
         // Adicione a lógica para determinar se o Proposer ainda está ativo
         // Por exemplo, você pode verificar se o `proposalId` e outros campos estão definidos corretamente
         return !proposalId.equals(new ProposalID(0, networkUid)); // Exemplo simplificado
     }
-    
-    
+
+
+    // Novo método getQuorum
+    public int getQuorum() {
+        return quorumSize;
+    }
 }
