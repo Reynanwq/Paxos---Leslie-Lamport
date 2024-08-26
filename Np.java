@@ -25,6 +25,13 @@ public class Np<T> {
     private Learner<T> learner;
     private Function<String, T> converter; // Função para conversão de String para T
 
+
+    // Armazena os valores propostos
+    private ProposalID lastProposalId;
+    private T lastConvertedValue;
+    private int lastId;
+    private String lastValue;
+
     public Np(String id, int quorum, Function<String, T> converter, int idNum) {
         this.idNum = idNum;
         this.proposer = new Proposer<>(id, quorum);
@@ -54,9 +61,27 @@ public class Np<T> {
         proposer.proposeValueProposer(value);
     }*/
 
-    public void proposeValue(String value) {
+    /* public void proposeValue(int id, String value) {
         T convertedValue = converter.apply(value); // Converte o valor para o tipo T
-        proposer.proposeValueProposer(convertedValue); // Passa o valor convertido
+        ProposalID proposalId = new ProposalID(id, proposer.getNetworkUidProposer());
+        proposer.proposeValueProposer(proposalId, convertedValue); // Passa o valor convertido
+    }*/
+    public void proposeValue(int id, String value) {
+        lastId = id; // Armazena o id
+        lastValue = value; // Armazena o valor
+        lastConvertedValue = converter.apply(value); // Converte o valor para o tipo T
+        lastProposalId = new ProposalID(id, proposer.getNetworkUidProposer()); // Cria ProposalID
+        
+        // Passa o valor convertido e ProposalID para o Proposer
+        proposer.proposeValueProposer(lastProposalId, lastConvertedValue);
+    }
+
+    // Novo método para imprimir os valores passados em proposeValue
+    public void printProposedValues() {
+        System.out.println("Proposta enviada: (" + lastId + "," + lastValue + ")");
+        //System.out.println("Last Value: " + lastValue);
+        //System.out.println("Last Converted Value: " + lastConvertedValue);
+       // System.out.println("Last ProposalID: " + lastProposalId);
     }
 
     public void receivePrepare(Prepare prepare) {

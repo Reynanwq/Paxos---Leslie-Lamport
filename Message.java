@@ -149,4 +149,3 @@ class Resolution<T> {
         return resolvedValue;
     }
 }
-

@@ -1,4 +1,4 @@
-import java.util.ArrayList;
+/*import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -77,11 +77,12 @@ public class Node<T> implements IAcceptor<T>, IProposer<T>, ILearner<T> {
     }
 
     @Override
-    public Optional<Message> proposeValueProposer(T value) {
+    public Optional<Message> proposeValueProposer(ProposalID id, T value) {
         if (!proposedValue.isPresent()) {
-            proposedValue = Optional.of(value);
+            proposedValue = Optional.of(value); 
             if (leader) {
-                currentAccept = Optional.of(new Accept<>(networkUid, proposalId, value));
+                //proposalId = id;
+                currentAccept = Optional.of(new Accept<>(networkUid, id, value));
                 return currentAccept;
             }
         }
@@ -338,4 +339,4 @@ public class Node<T> implements IAcceptor<T>, IProposer<T>, ILearner<T> {
         return finalValue;
     }
 
-}
+}*/

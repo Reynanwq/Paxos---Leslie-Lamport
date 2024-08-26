@@ -6,7 +6,6 @@ public interface IProposer<T> {
     Prepare prepareProposer();
     void setAcceptorsToPromiseProposer(Set<String> acceptorsToPromise);
     void processPromisesForSelectedAcceptorsProposer(List<Acceptor<T>> acceptors);
-    void processPromisesForSelectedAcceptorsProposerN(List<Node<T>> nodes);
     Optional<Message> getCurrentAcceptProposer();
     String getNetworkUidProposer();
     boolean isLeaderProposer();
@@ -16,7 +15,7 @@ public interface IProposer<T> {
     boolean receivePingProposer(String acceptorUid);
     void removeProposerProposer();
     ProposalID getProposalIdProposer();
-    Optional<Message> proposeValueProposer(T value);
+    Optional<Message> proposeValueProposer(ProposalID id, T value);
     void observeProposalProposer(ProposalID proposalId);
     Optional<Message> receiveProposer(Message msg);
     boolean isQuorumReachedProposer();

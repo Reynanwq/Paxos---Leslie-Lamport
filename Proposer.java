@@ -62,10 +62,11 @@ public class Proposer<T> implements IProposer<T> {
     }
 
     @Override
-    public Optional<Message> proposeValueProposer(T value) {
+    public Optional<Message> proposeValueProposer(ProposalID id, T value) {
         if (!proposedValue.isPresent()) {
-            proposedValue = Optional.of(value);
+            proposedValue = Optional.of(value); 
             if (leader) {
+                proposalId = id;
                 currentAccept = Optional.of(new Accept<>(networkUid, proposalId, value));
                 return currentAccept;
             }
@@ -152,15 +153,6 @@ public class Proposer<T> implements IProposer<T> {
         for (Acceptor<T> acceptor : acceptors) {
             if (acceptorsToPromise.contains(acceptor.getNetworkUidAcceptor())) {
                 receiveProposer(new Promise<>(acceptor.getNetworkUidAcceptor(), proposalId, networkUid, Optional.empty(), Optional.empty()));
-            }
-        }
-    }
-    // Método para processar apenas Acceptors selecionados
-    @Override
-    public void processPromisesForSelectedAcceptorsProposerN(List<Node<T>> nodes) {
-        for (Node<T> node : nodes) {
-            if (acceptorsToPromise.contains(node.getNetworkUidAcceptor())) {
-                receiveProposer(new Promise<>(node.getNetworkUidAcceptor(), proposalId, networkUid, Optional.empty(), Optional.empty()));
             }
         }
     }

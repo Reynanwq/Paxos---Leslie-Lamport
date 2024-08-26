@@ -47,4 +47,3 @@ public class ProposalID implements Comparable<ProposalID> {
         return Objects.hash(proposalNumber, networkUid);
     }
 }
-
