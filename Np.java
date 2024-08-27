@@ -24,6 +24,8 @@ public class Np<T> {
     private Acceptor<T> acceptor;
     private Learner<T> learner;
     private Function<String, T> converter; // Função para conversão de String para T
+     // Lista para armazenar os ProposalIDs
+     private List<ProposalID> proposalIdList = new ArrayList<>();
 
 
     // Armazena os valores propostos
@@ -74,6 +76,8 @@ public class Np<T> {
         
         // Passa o valor convertido e ProposalID para o Proposer
         proposer.proposeValueProposer(lastProposalId, lastConvertedValue);
+        // Chama o método para armazenar o ProposalID na lista
+        storeProposalIdIfGreater(lastProposalId);
     }
 
     // Novo método para imprimir os valores passados em proposeValue
@@ -83,6 +87,22 @@ public class Np<T> {
         //System.out.println("Last Converted Value: " + lastConvertedValue);
        // System.out.println("Last ProposalID: " + lastProposalId);
     }
+
+    // Método que armazena o ProposalID se for maior que o existente na lista
+private void storeProposalIdIfGreater(ProposalID newProposalId) {
+    if (proposalIdList.isEmpty()) {
+        proposalIdList.add(newProposalId);
+        System.out.println("Valor de Proposta armazenada: " + newProposalId.getId());
+    } else {
+        ProposalID currentProposalId = proposalIdList.get(0);
+        if (newProposalId.compareTo(currentProposalId) > 0) {
+            proposalIdList.set(0, newProposalId); // Substitui o valor atual
+            System.out.println("ProposalID substituído e armazenado: " + newProposalId.getId());
+        } else {
+            System.out.println("Não aceito. ProposalID menor ou igual ao já presente.");
+        }
+    }
+}
 
     public void receivePrepare(Prepare prepare) {
         acceptor.receiveAcceptor(prepare);
@@ -171,4 +191,7 @@ public class Np<T> {
         return new HashSet<>(returnedIds);
     }
 
+    
+
+    
 }

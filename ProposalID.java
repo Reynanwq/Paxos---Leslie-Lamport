@@ -17,6 +17,11 @@ public class ProposalID implements Comparable<ProposalID> {
         this.networkUid = networkUid;
     }
 
+     // Corrigido: getId() agora retorna o proposalNumber
+     public int getId() {
+        return proposalNumber;
+    }
+
     public int getProposalNumber() {
         return proposalNumber;
     }
@@ -24,6 +29,7 @@ public class ProposalID implements Comparable<ProposalID> {
     public String getNetworkUid() {
         return networkUid;
     }
+
 
     @Override
     public int compareTo(ProposalID other) {
@@ -46,4 +52,13 @@ public class ProposalID implements Comparable<ProposalID> {
     public int hashCode() {
         return Objects.hash(proposalNumber, networkUid);
     }
+
+    @Override
+    public String toString() {
+        return "ProposalID{" +
+                "proposalNumber=" + proposalNumber +
+                ", networkUid='" + networkUid + '\'' +
+                '}';
+    }
+
 }

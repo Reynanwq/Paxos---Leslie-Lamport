@@ -74,7 +74,8 @@ public class Main {
             
             //System.out.println("O nó " + proposerId + " está propondo o valor '" + smallestId.orElse(null) + "'.");
             proposerNode.proposeValue(smallestId.orElse(null), "valorA");
-            proposerNode.printProposedValues();
+            proposerNode.proposeValue(3, "valorXXX");
+            proposerNode.printProposedValues(); //TESTAR FUNCIONALIDADE
             Prepare prepare = proposerNode.getProposer().prepareProposer();
            //System.out.println("Proposta enviada: " + prepare);
             //System.out.println("Proposta enviada: " + prepare.getProposalId().getNetworkUid());
