@@ -157,6 +157,8 @@ public class Main {
                 }
             }
             System.out.println("-------------//-------------//--------------");
+            ProposerManager.removeProposer(proposerId);
+
             // Escolher um Acceptor para enviar o ping
             Acceptor<String> chosenNode = acceptors.get(0);
             boolean proposerAtivo = chosenNode.sendPingAcceptor(proposerId);
@@ -165,18 +167,23 @@ public class Main {
             }else{
                 System.out.println("O Proposer não respondeu ao ping. Ele pode estar inativo.");
                 System.out.println("Os outros nós iniciarão o processo de verificaçãod de queda.");
-                for(int i=0;i<=10;i++){
-                    for(Acceptor<String> acceptor: acceptors){
-                        acceptor = acceptors.get(i);
-                        boolean proposerAtivo2 = acceptor.sendPingAcceptor(proposerId);
-                        if (proposerAtivo2) {
-                            System.out.println("O Proposer está ativo e respondeu ao ping.");
-                        }else{
+                
+                for(Acceptor<String> acceptor: acceptors){
+                    System.out.println("Acceptor " + acceptor.getNetworkUidAcceptor() + " Enviou um Ping.");
+                    int i=0;
+                    acceptor = acceptors.get(i);
+                    boolean proposerAtivo2 = acceptor.sendPingAcceptor(proposerId);
+                    if (proposerAtivo2) {
+                        System.out.println("O Proposer está ativo e respondeu ao ping.");
+                    }else{
                         System.out.println("O Proposer não respondeu ao ping. Ele pode estar inativo.");
-                        }
                     }
+                    i++;
                 }
             }
+
+            //ProposerManager.removeProposer(proposerId);
+            ProposerManager.removeProposer("proposer25");       
     }
 }
 
