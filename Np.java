@@ -99,7 +99,7 @@ private void storeProposalIdIfGreater(ProposalID newProposalId) {
             proposalIdList.set(0, newProposalId); // Substitui o valor atual
             System.out.println("ProposalID substituído e armazenado: " + newProposalId.getId());
         } else {
-            System.out.println("Não aceito. ProposalID menor ou igual ao já presente.");
+            System.out.println("Não aceito. ProposalID menor ao já presente.");
         }
     }
 }

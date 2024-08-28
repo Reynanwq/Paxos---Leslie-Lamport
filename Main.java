@@ -74,12 +74,9 @@ public class Main {
             
             //System.out.println("O nó " + proposerId + " está propondo o valor '" + smallestId.orElse(null) + "'.");
             proposerNode.proposeValue(smallestId.orElse(null), "valorA");
-            proposerNode.proposeValue(3, "valorXXX");
+            //proposerNode.proposeValue(3, "valorXXX");
             proposerNode.printProposedValues(); //TESTAR FUNCIONALIDADE
             Prepare prepare = proposerNode.getProposer().prepareProposer();
-           //System.out.println("Proposta enviada: " + prepare);
-            //System.out.println("Proposta enviada: " + prepare.getProposalId().getNetworkUid());
-            //getProposalId().getProposalNumber()); //O NUMERO ENVIADO DEVE SER O ID
 
             // Acceptors recebem a proposta
             proposerNode.receivePrepare(prepare);
@@ -160,6 +157,26 @@ public class Main {
                 }
             }
             System.out.println("-------------//-------------//--------------");
+            // Escolher um Acceptor para enviar o ping
+            Acceptor<String> chosenNode = acceptors.get(0);
+            boolean proposerAtivo = chosenNode.sendPingAcceptor(proposerId);
+            if (proposerAtivo) {
+                System.out.println("O Proposer está ativo e respondeu ao ping.");
+            }else{
+                System.out.println("O Proposer não respondeu ao ping. Ele pode estar inativo.");
+                System.out.println("Os outros nós iniciarão o processo de verificaçãod de queda.");
+                for(int i=0;i<=10;i++){
+                    for(Acceptor<String> acceptor: acceptors){
+                        acceptor = acceptors.get(i);
+                        boolean proposerAtivo2 = acceptor.sendPingAcceptor(proposerId);
+                        if (proposerAtivo2) {
+                            System.out.println("O Proposer está ativo e respondeu ao ping.");
+                        }else{
+                        System.out.println("O Proposer não respondeu ao ping. Ele pode estar inativo.");
+                        }
+                    }
+                }
+            }
     }
 }
 
