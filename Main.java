@@ -138,10 +138,8 @@ public class Main {
                 for(Learner<String> nodeL : learners){
                     for (Acceptor<String> nodeA : acceptors) {
                         nodeL.receiveLearner(new Accepted<>(nodeA.getNetworkUidAcceptor(), acceptMessage.getProposalId(), acceptMessage.getProposalValue()));
-                        //System.out.println("Learner " + learner4.getNetworkUid() + " recebeu uma mensagem Accepted de " + acceptorr.getNetworkUid());
                     }
                     
-                    //System.out.println("ENTROU");
                     nodeL.getFinalValueLearner().ifPresent(value4 -> {
                         System.out.println("Learner " + nodeL.getNetworkUidLearner() + " decidiu valor final: " +  acceptMessage.getProposalValue());
                     });
@@ -166,18 +164,13 @@ public class Main {
                 System.out.println("O Proposer está ativo e respondeu ao ping.");
             }else{
                 System.out.println("O Proposer não respondeu ao ping. Ele pode estar inativo.");
-                System.out.println("Os outros nós iniciarão o processo de verificaçãod de queda.");
+                System.out.println("Os outros nós iniciarão o processo de verificação de queda.");
                 
                 for(Acceptor<String> acceptor: acceptors){
                     System.out.println("Acceptor " + acceptor.getNetworkUidAcceptor() + " Enviou um Ping.");
                     int i=0;
                     acceptor = acceptors.get(i);
                     boolean proposerAtivo2 = acceptor.sendPingAcceptor(proposerId);
-                    if (proposerAtivo2) {
-                        System.out.println("O Proposer está ativo e respondeu ao ping.");
-                    }else{
-                        System.out.println("O Proposer não respondeu ao ping. Ele pode estar inativo.");
-                    }
                     i++;
                 }
             }

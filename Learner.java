@@ -48,7 +48,7 @@ public class Learner<T> implements ILearner<T> {
         ProposalID lastPid = acceptors.get(msg.getNetworkUid());
 
         if (lastPid != null && msg.getProposalId().compareTo(lastPid) <= 0) {
-            return Optional.empty(); // Old message
+            return Optional.empty(); 
         }
 
         acceptors.put(msg.getNetworkUid(), msg.getProposalId());
