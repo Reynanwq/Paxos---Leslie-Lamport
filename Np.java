@@ -133,7 +133,7 @@ private void storeProposalIdIfGreater(ProposalID newProposalId) {
 
     public void checkFinalValues() {
         learner.getFinalValueLearner().ifPresent(value -> {
-            System.out.println("Learner " + learner.getNetworkUidLearner() + " decidiu valor final: " + value);
+            //System.out.println("Learner " + learner.getNetworkUidLearner() + " decidiu valor final: " + value);
         });
     }
 

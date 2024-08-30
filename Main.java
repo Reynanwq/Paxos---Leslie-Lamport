@@ -8,6 +8,7 @@ import java.util.function.Function;
 public class Main {
     public static void main(String[] args) throws InterruptedException {
         Function<String, String> identityConverter = Function.identity();
+        int j=0;
 
         // Criar nós
         List<Np<String>> nodes = new ArrayList<>();
@@ -16,29 +17,6 @@ public class Main {
             Np<String> node = new Np<>("node" + i, 6, identityConverter, id);
             nodes.add(node);
             System.out.println("Criado nó com ID: " + node.getIdNum());// Acesso ao ID
-        }
-        //System.out.println("Nós criados: " + nodes);
-
-        // Encontrar e adicionar o menor ID não retornado
-        Optional<Integer> smallestId = Np.findSmallestIdNotReturned();
-        System.out.println("Menor ID não retornado: " + smallestId.orElse(null));
-        
-        Np.addIdToReturned();
-        
-        // Verificar se o ID foi adicionado com sucesso
-        System.out.println("IDs retornados: " + Np.getReturnedIds());
-
-        String proposerId = "";
-        Np<String> proposerNode = null;
-        // Adicionar um loop para imprimir todos os nós com seus IDs
-        System.out.println("Nós criados e seus IDs:");
-        for (Np<String> node : nodes) {
-            System.out.println("Nome do nó: " + node.getProposer().getNetworkUidProposer() + ", ID: " + node.getIdNum());
-            if(smallestId.orElse(null).equals(node.getIdNum())){
-                proposerNode = node;
-                proposerId = node.getProposer().getNetworkUidProposer();
-
-            }
         }
 
         // Adicionar os Proposers ao gerenciador
@@ -63,6 +41,33 @@ public class Main {
         }
         //System.out.println("Learners criados: " + learners);
 
+    
+
+        while(!nodes.isEmpty()) {
+        System.out.println("-------------//-------------//--------------");
+
+        // Encontrar e adicionar o menor ID não retornado
+        Optional<Integer> smallestId = Np.findSmallestIdNotReturned();
+        System.out.println("Menor ID não retornado: " + smallestId.orElse(null));
+        
+        Np.addIdToReturned();
+        
+        // Verificar se o ID foi adicionado com sucesso
+        System.out.println("IDs retornados: " + Np.getReturnedIds());
+
+        String proposerId = "";
+        Np<String> proposerNode = null;
+        // Adicionar um loop para imprimir todos os nós com seus IDs
+        System.out.println("Nós criados e seus IDs:");
+        for (Np<String> node : nodes) {
+            System.out.println("Nome do nó: " + node.getProposer().getNetworkUidProposer() + ", ID: " + node.getIdNum());
+            if(smallestId.orElse(null).equals(node.getIdNum())){
+                proposerNode = node;
+                proposerId = node.getProposer().getNetworkUidProposer();
+
+            }
+        }
+
         
         
         if (proposerNode != null) {
@@ -72,8 +77,14 @@ public class Main {
             //System.out.println("O nó " + proposerId + " está propondo o valor 'valorA'.");
             
             
+            String b = "valorA";
+            if(j>0){
+                b = "valorB";
+            }
+            j++;
+            
             //System.out.println("O nó " + proposerId + " está propondo o valor '" + smallestId.orElse(null) + "'.");
-            proposerNode.proposeValue(smallestId.orElse(null), "valorA");
+            proposerNode.proposeValue(smallestId.orElse(null), b);
             //proposerNode.proposeValue(3, "valorXXX");
             proposerNode.printProposedValues(); //TESTAR FUNCIONALIDADE
             Prepare prepare = proposerNode.getProposer().prepareProposer();
@@ -121,7 +132,7 @@ public class Main {
 
                 System.out.println("Proposta aceita: " + acceptMessage.getProposalValue());
 
-
+                
                 for(Learner<String> nodeL : learners){
                     for(Acceptor<String> nodeA : acceptors){
                         nodeL.receiveLearner(new Accepted<>(nodeA.getNetworkUidAcceptor(), acceptMessage.getProposalId(), acceptMessage.getProposalValue()));
@@ -140,9 +151,10 @@ public class Main {
                         nodeL.receiveLearner(new Accepted<>(nodeA.getNetworkUidAcceptor(), acceptMessage.getProposalId(), acceptMessage.getProposalValue()));
                     }
                     
-                    nodeL.getFinalValueLearner().ifPresent(value4 -> {
-                        System.out.println("Learner " + nodeL.getNetworkUidLearner() + " decidiu valor final: " +  acceptMessage.getProposalValue());
-                    });
+                    nodeL.getFinalValueLearner().ifPresentOrElse(
+                        value -> System.out.println("Valor final ainda presente: " + value),
+                        () -> System.out.println("Valor final foi corretamente removido.")
+                    );
                 }
 
 
@@ -151,11 +163,12 @@ public class Main {
                 } 
 
                 
-                    proposerNode.checkFinalValues();
+                    //proposerNode.checkFinalValues();
                 }
             }
             System.out.println("-------------//-------------//--------------");
-            ProposerManager.removeProposer(proposerId);
+              //ProposerManager.removeProposer(proposerId);
+              //nodes.remove(proposerNode);
 
             // Escolher um Acceptor para enviar o ping
             Acceptor<String> chosenNode = acceptors.get(0);
@@ -175,8 +188,15 @@ public class Main {
                 }
             }
 
-            //ProposerManager.removeProposer(proposerId);
+            // Remover o nó inativo
+            nodes.remove(proposerNode);
+            ProposerManager.removeProposer(proposerId);
+
             ProposerManager.removeProposer("proposer25");       
+            System.out.println("Todos os nós foram removidos. Processo encerrado.");
+        }
+        System.out.println("Todos os nós foram removidos. Processo encerrado.");
+        
     }
 }
 

@@ -100,4 +100,13 @@ public class Learner<T> implements ILearner<T> {
     public String getNetworkUidLearner() {
         return networkUid;
     }
+
+    public void removeFinalDecision() {
+        proposals.clear();
+        acceptors.clear();
+        finalProposalId = Optional.empty();
+        finalValue = Optional.empty();
+        finalAcceptors.clear();
+        System.out.println("Decisão final removida e todos os dados foram limpos.");
+    }
 }

@@ -181,9 +181,6 @@ public class Proposer<T> implements IProposer<T> {
         nacksReceived.clear();
         currentPrepare = Optional.empty();
         currentAccept = Optional.empty();
-
-        // Notificar outros componentes se necessário
-        System.out.println("Estado do Proposer com UID " + networkUid + " foi limpo.");
     }
 
     @Override
